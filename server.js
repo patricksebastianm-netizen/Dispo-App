@@ -1,17 +1,17 @@
+const express = require("express");
 const cors = require("cors");
+const { Pool } = require("pg");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-
-const SECRET = "supersecretkey"; // später ändern!
-const express = require("express");
-const { Pool } = require("pg");
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Verbindung zur Datenbank
+const SECRET = "supersecretkey"; // später ändern!
+
+// 🔗 Datenbank Verbindung
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -19,12 +19,12 @@ const pool = new Pool({
   },
 });
 
-// Test Route
+// 🔹 TEST ROUTE
 app.get("/", (req, res) => {
   res.send("Backend läuft 🚀");
 });
 
-// Test Datenbank
+// 🔹 DB TEST
 app.get("/db-test", async (req, res) => {
   try {
     const result = await pool.query("SELECT NOW()");
@@ -35,7 +35,7 @@ app.get("/db-test", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// 🔹 DB SETUP
 app.get("/setup-db", async (req, res) => {
   try {
     await pool.query(`
@@ -63,9 +63,8 @@ app.get("/setup-db", async (req, res) => {
     res.status(500).send("Fehler beim Erstellen");
   }
 });
-app.listen(PORT, () => {
-  console.log("Server läuft auf Port " + PORT);
-});
+
+// 🔹 REGISTER
 app.post("/register", async (req, res) => {
   const { email, password, role, company_id } = req.body;
 
@@ -83,6 +82,8 @@ app.post("/register", async (req, res) => {
     res.status(500).send("Fehler beim Registrieren");
   }
 });
+
+// 🔹 LOGIN
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -115,4 +116,11 @@ app.post("/login", async (req, res) => {
     console.error(err);
     res.status(500).send("Login Fehler");
   }
+});
+
+// 🔹 SERVER START (IMMER GANZ UNTEN!)
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server läuft auf Port " + PORT);
 });
