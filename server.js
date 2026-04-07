@@ -29,10 +29,6 @@ app.get("/db-test", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("Server läuft auf Port " + PORT);
-});
 app.get("/setup-db", async (req, res) => {
   try {
     await pool.query(`
@@ -59,4 +55,7 @@ app.get("/setup-db", async (req, res) => {
     console.error(err);
     res.status(500).send("Fehler beim Erstellen");
   }
+});
+app.listen(PORT, () => {
+  console.log("Server läuft auf Port " + PORT);
 });
