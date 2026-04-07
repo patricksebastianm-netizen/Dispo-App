@@ -1,3 +1,7 @@
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+const SECRET = "supersecretkey"; // später ändern!
 const express = require("express");
 const { Pool } = require("pg");
 
@@ -58,4 +62,54 @@ app.get("/setup-db", async (req, res) => {
 });
 app.listen(PORT, () => {
   console.log("Server läuft auf Port " + PORT);
+});
+app.post("/register", async (req, res) => {
+  const { email, password, role, company_id } = req.body;
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      "INSERT INTO users (email, password, role, company_id) VALUES ($1, $2, $3, $4) RETURNING *",
+      [email, hashedPassword, role, company_id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Fehler beim Registrieren");
+  }
+});
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).send("User nicht gefunden");
+    }
+
+    const user = result.rows[0];
+
+    const valid = await bcrypt.compare(password, user.password);
+
+    if (!valid) {
+      return res.status(400).send("Falsches Passwort");
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, role: user.role, company_id: user.company_id },
+      SECRET,
+      { expiresIn: "2h" }
+    );
+
+    res.json({ token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Login Fehler");
+  }
 });
